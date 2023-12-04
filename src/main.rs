@@ -2,18 +2,26 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod camera;
+mod debug;
 mod menu;
+mod movement;
+mod person;
 mod states;
 
-use bevy::prelude::*;
+use bevy::{asset::AssetMetaCheck, prelude::*};
 use camera::Camera2dPlugin;
+use debug::DebugPlugin;
 use menu::MenuPlugin;
+use movement::MovementPlugin;
+use person::PersonPlugin;
 use states::GameState;
 
 fn main() {
     App::new()
         // Built-ins
         .insert_resource(ClearColor(Color::rgb(0.1, 0.1, 0.3)))
+        .insert_resource(Msaa::Off)
+        .insert_resource(AssetMetaCheck::Never)
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Complexcity".to_string(),
@@ -26,6 +34,7 @@ fn main() {
         }))
         // Custom
         .add_state::<GameState>()
-        .add_plugins((Camera2dPlugin, MenuPlugin))
+        .add_plugins((Camera2dPlugin, MenuPlugin, PersonPlugin, MovementPlugin))
+        .add_plugins(DebugPlugin)
         .run();
 }
