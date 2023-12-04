@@ -2,11 +2,9 @@
 name = "complexcity"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-bevy = "0.12.1"
+authors = ["Calliméthée"]
+publish = false
+exclude = ["dist", "build"]
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
@@ -15,3 +13,23 @@ opt-level = 1
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
 opt-level = 3
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+# The profile that 'cargo dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
+
+[features]
+dev = ["bevy/dynamic_linking"]
+
+# All of Bevy's default features exept for the audio related ones (bevy_audio, vorbis), since they clash with bevy_kira_audio
+#   and android_shared_stdcxx, since that is covered in `mobile`
+[dependencies]
+bevy = { version = "0.12.1" }
+
+[build-dependencies]
+embed-resource = "2.4.0"
