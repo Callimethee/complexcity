@@ -1,8 +1,10 @@
 // disable console on windows for release builds
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod building;
 mod camera;
 mod debug;
+mod ground;
 mod menu;
 mod movement;
 mod person;
@@ -11,6 +13,7 @@ mod states;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use camera::Camera2dPlugin;
 use debug::DebugPlugin;
+use ground::GroundPlugin;
 use menu::MenuPlugin;
 use movement::MovementPlugin;
 use person::PersonPlugin;
@@ -34,7 +37,13 @@ fn main() {
         }))
         // Custom
         .add_state::<GameState>()
-        .add_plugins((Camera2dPlugin, MenuPlugin, PersonPlugin, MovementPlugin))
+        .add_plugins((
+            Camera2dPlugin,
+            MenuPlugin,
+            PersonPlugin,
+            MovementPlugin,
+            GroundPlugin,
+        ))
         .add_plugins(DebugPlugin)
         .run();
 }
