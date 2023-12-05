@@ -1,15 +1,22 @@
+use std::f32::consts::SQRT_2;
+
 use bevy::prelude::*;
 use rand::{
     distributions::{Distribution, Standard},
     Rng,
 };
 
-use crate::{person::Person, states::GameState};
+use crate::{
+    person::{Person, PersonState},
+    states::GameState,
+};
 
-const MOVEMENT_FACTOR: f32 = 18.0;
+const MOVEMENT_SCALAR: f32 = 18.0;
+const INTERACTION_FORCE: f32 = 1.0;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum MovementDir {
+    #[default]
     PlusX,
     PlusY,
     PlusBoth,
@@ -44,47 +51,84 @@ impl Plugin for MovementPlugin {
             TimerMode::Repeating,
         )))
         .add_systems(
+            PreUpdate,
+            reset_movement_vector.run_if(in_state(GameState::Playing)),
+        )
+        .add_systems(
             Update,
             move_idle_persons.run_if(in_state(GameState::Playing)),
+        )
+        .add_systems(
+            PostUpdate,
+            resolve_movements.run_if(in_state(GameState::Playing)),
         );
     }
 }
 
+fn reset_movement_vector(mut person_query: Query<&mut Person>) {
+    for mut person in &mut person_query {
+        person.movement_vector = Vec3::ZERO;
+    }
+}
+
 fn move_idle_persons(
-    mut person_query: Query<(&mut Person, &mut Transform)>,
+    mut person_query: Query<&mut Person>,
     time: Res<Time>,
     mut dir_timer: ResMut<IdleDirectionTimer>,
 ) {
     if dir_timer.0.tick(time.delta()).just_finished() {
         // change the directions at random
-        for (mut person, _transform) in &mut person_query {
+        for mut person in &mut person_query {
             let new_dir: MovementDir = rand::random();
             person.movement_direction = new_dir;
         }
     }
 
-    for (person, mut transform) in &mut person_query {
-        match person.movement_direction {
-            MovementDir::PlusX => {
-                transform.translation.x += MOVEMENT_FACTOR * time.delta_seconds();
-            }
-            MovementDir::PlusY => {
-                transform.translation.y += MOVEMENT_FACTOR * time.delta_seconds();
-            }
-            MovementDir::PlusBoth => {
-                transform.translation.x += MOVEMENT_FACTOR * time.delta_seconds();
-                transform.translation.y += MOVEMENT_FACTOR * time.delta_seconds();
-            }
-            MovementDir::MinusX => {
-                transform.translation.x -= MOVEMENT_FACTOR * time.delta_seconds();
-            }
-            MovementDir::MinusY => {
-                transform.translation.y -= MOVEMENT_FACTOR * time.delta_seconds();
-            }
-            MovementDir::MinusBoth => {
-                transform.translation.x -= MOVEMENT_FACTOR * time.delta_seconds();
-                transform.translation.y -= MOVEMENT_FACTOR * time.delta_seconds();
+    for mut person in &mut person_query {
+        if matches!(person.state, PersonState::Idle) {
+            match person.movement_direction {
+                MovementDir::PlusX => {
+                    person.movement_vector.x += 1.0;
+                }
+                MovementDir::PlusY => {
+                    person.movement_vector.y += 1.0;
+                }
+                MovementDir::PlusBoth => {
+                    person.movement_vector.x += 1.0 / SQRT_2;
+                    person.movement_vector.y += 1.0 / SQRT_2;
+                }
+                MovementDir::MinusX => {
+                    person.movement_vector.x -= 1.0;
+                }
+                MovementDir::MinusY => {
+                    person.movement_vector.y -= 1.0;
+                }
+                MovementDir::MinusBoth => {
+                    person.movement_vector.x -= 1.0 / SQRT_2;
+                    person.movement_vector.y -= 1.0 / SQRT_2;
+                }
             }
         }
+    }
+}
+
+fn move_relative_to(
+    mut moved_person: Person,
+    moved_transform: Transform,
+    destination: Transform,
+    towards: bool,
+) {
+    let direction_mult = match towards {
+        true => 1.0,
+        false => -1.0,
+    };
+    moved_person.movement_vector += direction_mult
+        * INTERACTION_FORCE
+        * (destination.translation - moved_transform.translation);
+}
+
+fn resolve_movements(mut person_query: Query<(&Person, &mut Transform)>, time: Res<Time>) {
+    for (person, mut transform) in &mut person_query {
+        transform.translation += person.movement_vector * MOVEMENT_SCALAR * time.delta_seconds();
     }
 }
