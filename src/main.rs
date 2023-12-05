@@ -8,6 +8,7 @@ mod ground;
 mod menu;
 mod movement;
 mod person;
+mod selector;
 mod states;
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
@@ -17,6 +18,7 @@ use ground::GroundPlugin;
 use menu::MenuPlugin;
 use movement::MovementPlugin;
 use person::PersonPlugin;
+use selector::SelectorPlugin;
 use states::GameState;
 
 fn main() {
@@ -43,6 +45,7 @@ fn main() {
             PersonPlugin,
             MovementPlugin,
             GroundPlugin,
+            SelectorPlugin,
         ))
         .add_plugins(DebugPlugin)
         .run();
