@@ -9,13 +9,13 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::MainMenu), spawn_menu)
+        app.add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
             .add_systems(Update, click_buttons.run_if(in_state(GameState::MainMenu)))
             .add_systems(OnExit(GameState::MainMenu), despawn_menu);
     }
 }
 
-fn spawn_menu(mut commands: Commands) {
+fn spawn_main_menu(mut commands: Commands) {
     commands
         .spawn((
             NodeBundle {
