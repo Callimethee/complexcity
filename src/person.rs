@@ -2,27 +2,29 @@ use bevy::prelude::*;
 
 use crate::{movement::MovementDir, states::GameState};
 
-const SPRITE_SCALE: Vec3 = Vec3::new(1.0, 1.0, 0.0);
+pub const SPRITE_SCALE: Vec3 = Vec3::new(1.0, 1.0, 0.0);
+const PERSON_LEVEL: f32 = 2.0;
 
 #[derive(Resource)]
-struct UsedPersons {
-    list: Vec<i32>,
+pub struct UsedPersons {
+    pub list: Vec<i32>,
 }
 
 #[derive(Resource, Debug)]
 struct SpawnTimer(Timer);
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub enum PersonState {
     #[default]
     Idle,
     LookingForFood,
 }
 
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Clone)]
 pub struct Person {
     pub id: i32,
-    pub hunger: i32,
+    pub hunger: f32,
+    pub satisfaction: f32,
     pub state: PersonState,
     pub movement_direction: MovementDir,
     pub movement_vector: Vec3,
@@ -43,7 +45,14 @@ impl Plugin for PersonPlugin {
         app.insert_resource(UsedPersons { list: vec![] })
             .insert_resource(SpawnTimer(Timer::from_seconds(7.0, TimerMode::Repeating)))
             .add_systems(OnEnter(GameState::Playing), spawn_first_person)
-            .add_systems(Update, (spawn_person).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (spawn_person, update_satisfactions).run_if(in_state(GameState::Playing)),
+            )
+            .add_systems(
+                PostUpdate,
+                update_liked_disliked.run_if(in_state(GameState::Playing)),
+            )
             .add_systems(OnExit(GameState::Playing), cleanup_persons);
     }
 }
@@ -56,7 +65,8 @@ fn spawn_first_person(
     commands.spawn(PersonBundle {
         person: Person {
             id: 0,
-            hunger: 0,
+            hunger: 50.0,
+            satisfaction: 50.0,
             state: PersonState::Idle,
             movement_direction: MovementDir::PlusBoth,
             movement_vector: Vec3::ZERO,
@@ -66,7 +76,7 @@ fn spawn_first_person(
             texture: asset_server.load("Adam_idle_front.png"),
             transform: Transform {
                 scale: SPRITE_SCALE,
-                translation: Vec3::new(0.0, 0.0, 1.0),
+                translation: Vec3::new(0.0, 0.0, PERSON_LEVEL),
                 ..default()
             },
             ..default()
@@ -91,7 +101,8 @@ fn spawn_person(
         commands.spawn(PersonBundle {
             person: Person {
                 id: available_id,
-                hunger: 0,
+                hunger: 50.0,
+                satisfaction: 50.0,
                 state: PersonState::Idle,
                 movement_direction: MovementDir::PlusBoth,
                 movement_vector: Vec3::ZERO,
@@ -101,7 +112,7 @@ fn spawn_person(
                 texture: asset_server.load("Adam_idle_front.png"),
                 transform: Transform {
                     scale: SPRITE_SCALE,
-                    translation: Vec3::new(0.0, 0.0, 1.0),
+                    translation: Vec3::new(0.0, 0.0, PERSON_LEVEL),
                     ..default()
                 },
                 ..default()
@@ -111,8 +122,34 @@ fn spawn_person(
     }
 }
 
-fn cleanup_persons(mut commands: Commands, person_query: Query<Entity, With<Person>>) {
+fn update_liked_disliked(mut person_query: Query<&mut Person>, used_ids: Res<UsedPersons>) {
+    for mut person in &mut person_query {
+        for id in &used_ids.list {
+            if !person.liked.contains(id) && !person.disliked.contains(id) {
+                let likes_this_one: bool = rand::random();
+                if likes_this_one {
+                    person.liked.push(*id);
+                } else {
+                    person.disliked.push(*id);
+                }
+            }
+        }
+    }
+}
+
+fn update_satisfactions(mut person_query: Query<&mut Person>) {
+    for mut person in &mut person_query {
+        person.satisfaction = person.hunger;
+    }
+}
+
+fn cleanup_persons(
+    mut commands: Commands,
+    person_query: Query<Entity, With<Person>>,
+    mut used_ids: ResMut<UsedPersons>,
+) {
     for entity in &person_query {
         commands.entity(entity).despawn_recursive();
     }
+    used_ids.list = vec![];
 }
