@@ -11,6 +11,7 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
             .add_systems(Update, click_buttons.run_if(in_state(GameState::MainMenu)))
+            .add_systems(Update, back_to_menu.run_if(in_state(GameState::Playing)))
             .add_systems(OnExit(GameState::MainMenu), despawn_menu);
     }
 }
@@ -76,5 +77,11 @@ fn click_buttons(
 fn despawn_menu(mut commands: Commands, menu_query: Query<Entity, With<MainMenu>>) {
     for entity in &menu_query {
         commands.entity(entity).despawn_recursive();
+    }
+}
+
+fn back_to_menu(keys: Res<Input<KeyCode>>, mut game_state: ResMut<NextState<GameState>>) {
+    if keys.just_pressed(KeyCode::Escape) || keys.just_pressed(KeyCode::Back) {
+        game_state.set(GameState::MainMenu);
     }
 }
