@@ -1,8 +1,13 @@
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 
+use crate::camera::CursorPosition;
+
 #[derive(Component, Debug)]
 pub struct FpsText;
+
+#[derive(Component, Debug)]
+pub struct PersonsText;
 
 const TEXT_SIZE: f32 = 30.0;
 
@@ -12,7 +17,8 @@ impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(FrameTimeDiagnosticsPlugin)
             .add_systems(Startup, spawn_fps_text)
-            .add_systems(Update, show_running_info);
+            .add_systems(Update, show_running_info)
+            .add_systems(Update, print_cursor_position);
     }
 }
 
@@ -51,4 +57,8 @@ fn show_running_info(
             }
         }
     }
+}
+
+fn print_cursor_position(pos: Res<CursorPosition>) {
+    println!("Cursor pos in world coords: ({};{})", pos.0.x, pos.0.y);
 }
