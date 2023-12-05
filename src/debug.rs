@@ -9,7 +9,7 @@ pub struct FpsText;
 #[derive(Component, Debug)]
 pub struct PersonsText;
 
-const TEXT_SIZE: f32 = 30.0;
+pub const TEXT_SIZE: f32 = 30.0;
 
 pub struct DebugPlugin;
 
