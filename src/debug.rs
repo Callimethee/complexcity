@@ -17,8 +17,8 @@ impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(FrameTimeDiagnosticsPlugin)
             .add_systems(Startup, spawn_fps_text)
-            .add_systems(Update, show_running_info)
-            .add_systems(Update, print_cursor_position);
+            // .add_systems(Update, print_cursor_position)
+            .add_systems(Update, show_running_info);
     }
 }
 
