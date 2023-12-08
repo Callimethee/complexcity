@@ -16,7 +16,7 @@ const CREATIVE_SIZE: Vec2 = Vec2::new(68.0, 42.0);
 const UNDERGROUND_SIZE: Vec2 = Vec2::new(32.0, 48.0);
 
 #[derive(Debug, Component, PartialEq)]
-enum BuildingType {
+pub enum BuildingType {
     House,
     Forum,
     Cinema,
