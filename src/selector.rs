@@ -73,55 +73,37 @@ fn follow_selected_person(
 }
 
 fn spawn_person_info(mut commands: Commands) {
+    let text_style = TextStyle {
+        font_size: TEXT_SIZE,
+        ..default()
+    };
+
     commands.spawn((
         TextBundle::from_sections([
-            TextSection::new(
-                "Selected Person: ",
-                TextStyle {
-                    font_size: TEXT_SIZE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "",
-                TextStyle {
-                    font_size: TEXT_SIZE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "\nLikes: ",
-                TextStyle {
-                    font_size: TEXT_SIZE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "",
-                TextStyle {
-                    font_size: TEXT_SIZE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "\nDislikes: ",
-                TextStyle {
-                    font_size: TEXT_SIZE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "",
-                TextStyle {
-                    font_size: TEXT_SIZE,
-                    ..default()
-                },
-            ),
+            TextSection::new("Selected Person: ", text_style.clone()),
+            TextSection::new("", text_style.clone()),
+            TextSection::new("\nShelter: ", text_style.clone()),
+            TextSection::new("", text_style.clone()),
+            TextSection::new("\nHunger: ", text_style.clone()),
+            TextSection::new("", text_style.clone()),
+            TextSection::new("\nSocial: ", text_style.clone()),
+            TextSection::new("", text_style.clone()),
+            TextSection::new("\nEntertainment: ", text_style.clone()),
+            TextSection::new("", text_style.clone()),
+            TextSection::new("\nHealth: ", text_style.clone()),
+            TextSection::new("", text_style.clone()),
+            TextSection::new("\nSport: ", text_style.clone()),
+            TextSection::new("", text_style.clone()),
+            TextSection::new("\nCreativity: ", text_style.clone()),
+            TextSection::new("", text_style.clone()),
+            TextSection::new("\nSatisfaction: ", text_style.clone()),
+            TextSection::new("", text_style),
         ])
         .with_style(Style {
             position_type: PositionType::Absolute,
             right: Val::VMax(0.5),
             top: Val::VMin(1.0),
+            justify_content: JustifyContent::Center,
             ..default()
         }),
         PersonInfoText,
@@ -139,8 +121,14 @@ fn display_person_info(
     text.sections[1].value = format!("{}", selector.selected);
     for person in &person_query {
         if person.id == selector.selected {
-            text.sections[3].value = format!("{:?}", person.liked);
-            text.sections[5].value = format!("{:?}", person.disliked);
+            text.sections[3].value = format!("{:.0}", person.shelter);
+            text.sections[5].value = format!("{:.0}", person.hunger);
+            text.sections[7].value = format!("{:.0}", person.social);
+            text.sections[9].value = format!("{:.0}", person.entertained);
+            text.sections[11].value = format!("{:.0}", person.health);
+            text.sections[13].value = format!("{:.0}", person.sport);
+            text.sections[15].value = format!("{:.0}", person.creativity);
+            text.sections[17].value = format!("{:.0}", person.satisfaction);
         }
     }
 }
