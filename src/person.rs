@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{movement::MovementDir, states::GameState};
+use crate::{asset_loader::AssetHandles, movement::MovementDir, states::GameState};
 
 pub const SPRITE_SCALE: Vec3 = Vec3::new(1.0, 1.0, 0.0);
 const PERSON_LEVEL: f32 = 2.0;
@@ -18,6 +18,7 @@ pub enum PersonState {
     #[default]
     Idle,
     LookingForFood,
+    LookingForShelter,
 }
 
 #[derive(Component, Debug, Default, Clone)]
@@ -59,7 +60,7 @@ impl Plugin for PersonPlugin {
 
 fn spawn_first_person(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    asset_handles: Res<AssetHandles>,
     mut used_ids: ResMut<UsedPersons>,
 ) {
     commands.spawn(PersonBundle {
@@ -73,7 +74,7 @@ fn spawn_first_person(
             ..default()
         },
         sprite: SpriteBundle {
-            texture: asset_server.load("Adam_idle_front.png"),
+            texture: asset_handles.person.clone(),
             transform: Transform {
                 scale: SPRITE_SCALE,
                 translation: Vec3::new(0.0, 0.0, PERSON_LEVEL),
@@ -87,7 +88,7 @@ fn spawn_first_person(
 
 fn spawn_person(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    asset_handles: Res<AssetHandles>,
     mut used_ids: ResMut<UsedPersons>,
     time: Res<Time>,
     mut spawn_timer: ResMut<SpawnTimer>,
@@ -109,7 +110,7 @@ fn spawn_person(
                 ..default()
             },
             sprite: SpriteBundle {
-                texture: asset_server.load("Adam_idle_front.png"),
+                texture: asset_handles.person.clone(),
                 transform: Transform {
                     scale: SPRITE_SCALE,
                     translation: Vec3::new(0.0, 0.0, PERSON_LEVEL),

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    asset_loader::AssetHandles,
     debug::TEXT_SIZE,
     person::{Person, UsedPersons, SPRITE_SCALE},
     states::GameState,
@@ -42,11 +43,11 @@ impl Plugin for SelectorPlugin {
     }
 }
 
-fn spawn_selector(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_selector(mut commands: Commands, asset_handles: Res<AssetHandles>) {
     commands.spawn(SelectorBundle {
         selector: Selector { selected: 0 },
         sprite: SpriteBundle {
-            texture: asset_server.load("selector.png"),
+            texture: asset_handles.selector.clone(),
             transform: Transform {
                 translation: Vec3::new(0.0, 0.0, SELECTOR_LEVEL),
                 scale: SPRITE_SCALE,
