@@ -5,6 +5,7 @@ use crate::states::GameState;
 // for z-ordering
 const CAMERA_LEVEL: f32 = 20.0;
 
+/// The position of the cursor, in world coordinates.
 #[derive(Resource, Debug, Default)]
 pub struct CursorPosition(pub Vec2);
 
