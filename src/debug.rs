@@ -59,6 +59,8 @@ fn show_running_info(
     }
 }
 
-fn print_cursor_position(pos: Res<CursorPosition>) {
-    println!("Cursor pos in world coords: ({};{})", pos.0.x, pos.0.y);
+fn print_cursor_position(pos: Res<CursorPosition>, buttons: Res<Input<MouseButton>>) {
+    if buttons.pressed(MouseButton::Left) {
+        println!("Cursor pos in world coords: ({};{})", pos.0.x, pos.0.y);
+    }
 }
