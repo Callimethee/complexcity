@@ -1,9 +1,11 @@
 // disable console on windows for release builds
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod asset_loader;
 mod building;
 mod camera;
 mod debug;
+mod drag;
 mod ground;
 mod menu;
 mod movement;
@@ -11,9 +13,12 @@ mod person;
 mod selector;
 mod states;
 
+use asset_loader::AssetLoaderPlugin;
 use bevy::{asset::AssetMetaCheck, prelude::*};
+use building::BuildingPlugin;
 use camera::Camera2dPlugin;
 use debug::DebugPlugin;
+use drag::DragPlugin;
 use ground::GroundPlugin;
 use menu::MenuPlugin;
 use movement::MovementPlugin;
@@ -40,11 +45,14 @@ fn main() {
         // Custom
         .add_state::<GameState>()
         .add_plugins((
+            AssetLoaderPlugin,
+            BuildingPlugin,
             Camera2dPlugin,
-            MenuPlugin,
-            PersonPlugin,
-            MovementPlugin,
+            DragPlugin,
             GroundPlugin,
+            MenuPlugin,
+            MovementPlugin,
+            PersonPlugin,
             SelectorPlugin,
         ))
         .add_plugins(DebugPlugin)
