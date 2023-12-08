@@ -13,7 +13,7 @@ use crate::{
 
 const MOVEMENT_SCALAR: f32 = 2.0;
 const INTERACTION_FORCE: f32 = 0.5;
-const IDLE_FORCE: f32 = 3.5;
+const IDLE_FORCE: f32 = 4.5;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub enum MovementDir {
