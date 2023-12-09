@@ -1,7 +1,14 @@
 use bevy::prelude::*;
 
-use crate::{asset_loader::AssetHandles, drag::Draggable, states::GameState};
+use crate::{
+    asset_loader::AssetHandles,
+    debug::TEXT_SIZE,
+    drag::{Draggable, Interactable},
+    score::Score,
+    states::GameState,
+};
 
+/// The minimum distance between two buildings.
 const MIN_DISTANCE: f32 = 30.0;
 
 const BUILDING_LEVEL: f32 = 1.0;
@@ -14,6 +21,9 @@ const POOL_SIZE: Vec2 = Vec2::new(64.0, 54.0);
 const RESTAURANT_SIZE: Vec2 = Vec2::new(64.0, 48.0);
 const CREATIVE_SIZE: Vec2 = Vec2::new(68.0, 42.0);
 const UNDERGROUND_SIZE: Vec2 = Vec2::new(32.0, 48.0);
+
+#[derive(Component, Debug)]
+struct BuildingInfoText;
 
 #[derive(Debug, Component, PartialEq)]
 pub enum BuildingType {
@@ -38,24 +48,67 @@ pub struct BuildingPlugin;
 
 impl Plugin for BuildingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (trigger_spawn, hitbox_follow, destack_buildings).run_if(in_state(GameState::Playing)),
-        );
+        app.add_systems(OnEnter(GameState::Playing), spawn_info_text)
+            .add_systems(
+                Update,
+                (trigger_spawn, hitbox_follow, destack_buildings)
+                    .run_if(in_state(GameState::Playing)),
+            );
     }
+}
+
+fn spawn_info_text(mut commands: Commands) {
+    let text_style = TextStyle {
+        font_size: TEXT_SIZE,
+        ..default()
+    };
+
+    commands.spawn((
+        TextBundle::from_sections([TextSection::new(
+            "H: House/R: Restaurant/F: Forum/C: Cinema/O: Hospital/P: Pool/E: Creative supplies",
+            text_style,
+        )])
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            bottom: Val::VMin(1.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        }),
+        BuildingInfoText,
+    ));
 }
 
 fn trigger_spawn(
     mut commands: Commands,
     asset_handles: Res<AssetHandles>,
     keys: Res<Input<KeyCode>>,
+    score: Res<Score>,
 ) {
     if keys.just_pressed(KeyCode::H) {
         spawn_building(BuildingType::House, &mut commands, &asset_handles)
     }
-    if keys.just_pressed(KeyCode::F) {
+    if keys.just_pressed(KeyCode::F) && score.0 > 20.0 {
         spawn_building(BuildingType::Forum, &mut commands, &asset_handles)
     }
+    if keys.just_pressed(KeyCode::C) {
+        spawn_building(BuildingType::Cinema, &mut commands, &asset_handles)
+    }
+    if keys.just_pressed(KeyCode::O) {
+        spawn_building(BuildingType::Hospital, &mut commands, &asset_handles)
+    }
+    if keys.just_pressed(KeyCode::P) {
+        spawn_building(BuildingType::Pool, &mut commands, &asset_handles)
+    }
+    if keys.just_pressed(KeyCode::R) {
+        spawn_building(BuildingType::Restaurant, &mut commands, &asset_handles)
+    }
+    if keys.just_pressed(KeyCode::E) {
+        spawn_building(BuildingType::Creative, &mut commands, &asset_handles)
+    }
+    // if keys.just_pressed(KeyCode::U) {
+    //     spawn_building(BuildingType::Underground, &mut commands, &asset_handles)
+    // }
 }
 
 fn spawn_building(
@@ -86,8 +139,10 @@ fn spawn_building(
             ..default()
         },
         draggable: Draggable {
-            bottom_left: Vec2::ZERO,
-            top_right,
+            interact: Interactable {
+                bottom_left: Vec2::ZERO,
+                top_right,
+            },
             being_dragged: false,
         },
     });
@@ -96,10 +151,10 @@ fn spawn_building(
 fn hitbox_follow(mut draggables_query: Query<(&mut Draggable, &BuildingType, &Transform)>) {
     for (mut draggable, b_type, transform) in &mut draggables_query {
         let building_size = get_size_from_type(b_type);
-        draggable.bottom_left.x = transform.translation.x - building_size.x / 2.0;
-        draggable.bottom_left.y = transform.translation.y - building_size.y / 2.0;
-        draggable.top_right.x = transform.translation.x + building_size.x / 2.0;
-        draggable.top_right.y = transform.translation.y + building_size.y / 2.0;
+        draggable.interact.bottom_left.x = transform.translation.x - building_size.x / 2.0;
+        draggable.interact.bottom_left.y = transform.translation.y - building_size.y / 2.0;
+        draggable.interact.top_right.x = transform.translation.x + building_size.x / 2.0;
+        draggable.interact.top_right.y = transform.translation.y + building_size.y / 2.0;
     }
 }
 
