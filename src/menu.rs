@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::states::GameState;
 
 #[derive(Component, Debug)]
-struct MainMenu;
+struct MenuUI;
 
 pub struct MenuPlugin;
 
@@ -29,7 +29,7 @@ fn spawn_main_menu(mut commands: Commands) {
                 },
                 ..default()
             },
-            MainMenu,
+            MenuUI,
         ))
         .with_children(|parent| {
             parent
@@ -74,7 +74,7 @@ fn click_buttons(
     }
 }
 
-fn despawn_menu(mut commands: Commands, menu_query: Query<Entity, With<MainMenu>>) {
+fn despawn_menu(mut commands: Commands, menu_query: Query<Entity, With<MenuUI>>) {
     for entity in &menu_query {
         commands.entity(entity).despawn_recursive();
     }
