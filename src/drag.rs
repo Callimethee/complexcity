@@ -4,9 +4,14 @@ use crate::{camera::CursorPosition, states::GameState};
 
 #[derive(Debug, Default, Component)]
 pub struct Draggable {
+    pub interact: Interactable,
+    pub being_dragged: bool,
+}
+
+#[derive(Component, Default, Debug, Clone)]
+pub struct Interactable {
     pub bottom_left: Vec2,
     pub top_right: Vec2,
-    pub being_dragged: bool,
 }
 
 pub struct DragPlugin;
@@ -22,15 +27,9 @@ fn dragging_system(
     buttons: Res<Input<MouseButton>>,
     cursor_pos: Res<CursorPosition>,
 ) {
-    let mut offset = Vec2::ZERO;
-
     if buttons.just_pressed(MouseButton::Left) {
         for (mut draggable, _transform) in &mut draggables_query {
-            if cursor_pos.0.x > draggable.bottom_left.x
-                && cursor_pos.0.y > draggable.bottom_left.y
-                && cursor_pos.0.x < draggable.top_right.x
-                && cursor_pos.0.y < draggable.top_right.y
-            {
+            if clicked_on(&cursor_pos, &draggable.interact) {
                 draggable.being_dragged = true
             }
         }
@@ -48,4 +47,11 @@ fn dragging_system(
             draggable.being_dragged = false;
         }
     }
+}
+
+pub fn clicked_on(cursor_pos: &Res<CursorPosition>, interactable: &Interactable) -> bool {
+    cursor_pos.0.x > interactable.bottom_left.x
+        && cursor_pos.0.y > interactable.bottom_left.y
+        && cursor_pos.0.x < interactable.top_right.x
+        && cursor_pos.0.y < interactable.top_right.y
 }
