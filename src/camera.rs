@@ -57,6 +57,7 @@ fn zoom_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, keys: Re
     if keys.just_pressed(KeyCode::PageUp) {
         camera_transform.scale += Vec3::new(0.2, 0.2, 0.0);
     } else if keys.just_pressed(KeyCode::PageDown) {
-        camera_transform.scale -= Vec3::new(0.2, 0.2, 0.0);
+        camera_transform.scale = (camera_transform.scale - Vec3::new(0.2, 0.2, 0.0))
+            .clamp(Vec3::new(0.2, 0.2, 0.0), Vec3::MAX);
     }
 }
