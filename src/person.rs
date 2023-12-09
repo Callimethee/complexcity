@@ -48,7 +48,7 @@ pub struct PersonPlugin;
 impl Plugin for PersonPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(UsedPersons { list: vec![] })
-            .insert_resource(SpawnTimer(Timer::from_seconds(7.0, TimerMode::Repeating)))
+            .insert_resource(SpawnTimer(Timer::from_seconds(6.3, TimerMode::Repeating)))
             .insert_resource(ScoreUpdateTimer(Timer::from_seconds(
                 1.0,
                 TimerMode::Repeating,
