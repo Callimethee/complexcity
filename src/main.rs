@@ -10,6 +10,7 @@ mod ground;
 mod menu;
 mod movement;
 mod person;
+mod score;
 mod selector;
 mod states;
 
@@ -17,12 +18,13 @@ use asset_loader::AssetLoaderPlugin;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use building::BuildingPlugin;
 use camera::Camera2dPlugin;
-use debug::DebugPlugin;
+// use debug::DebugPlugin;
 use drag::DragPlugin;
 use ground::GroundPlugin;
 use menu::MenuPlugin;
 use movement::MovementPlugin;
 use person::PersonPlugin;
+use score::ScorePlugin;
 use selector::SelectorPlugin;
 use states::GameState;
 
@@ -53,8 +55,9 @@ fn main() {
             MenuPlugin,
             MovementPlugin,
             PersonPlugin,
+            ScorePlugin,
             SelectorPlugin,
         ))
-        .add_plugins(DebugPlugin)
+        // .add_plugins(DebugPlugin)
         .run();
 }
