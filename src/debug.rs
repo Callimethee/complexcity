@@ -17,7 +17,7 @@ impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(FrameTimeDiagnosticsPlugin)
             .add_systems(Startup, spawn_fps_text)
-            // .add_systems(Update, print_cursor_position)
+            .add_systems(Update, print_cursor_position)
             .add_systems(Update, show_running_info);
     }
 }
@@ -46,10 +46,10 @@ fn spawn_fps_text(mut commands: Commands) {
 
 fn show_running_info(
     diagnostics: Res<DiagnosticsStore>,
-    mut query: Query<&mut Text, With<FpsText>>,
+    mut text_query: Query<&mut Text, With<FpsText>>,
 ) {
     // Update second text section with fps value
-    for mut text in &mut query {
+    for mut text in &mut text_query {
         if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(value) = fps.smoothed() {
                 // Update the value of the second section
