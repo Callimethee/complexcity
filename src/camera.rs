@@ -4,6 +4,7 @@ use crate::states::GameState;
 
 // for z-ordering
 const CAMERA_LEVEL: f32 = 20.0;
+const MOVEMENT_VAL: f32 = 5.0;
 
 /// The position of the cursor, in world coordinates.
 #[derive(Resource, Debug, Default)]
@@ -16,7 +17,10 @@ impl Plugin for Camera2dPlugin {
         app.init_resource::<CursorPosition>()
             .add_systems(Startup, spawn_camera)
             .add_systems(Update, get_cursor_pos)
-            .add_systems(Update, zoom_camera.run_if(in_state(GameState::Playing)));
+            .add_systems(
+                Update,
+                (zoom_camera, move_camera).run_if(in_state(GameState::Playing)),
+            );
     }
 }
 
@@ -59,5 +63,19 @@ fn zoom_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, keys: Re
     } else if keys.just_pressed(KeyCode::PageDown) {
         camera_transform.scale = (camera_transform.scale - Vec3::new(0.2, 0.2, 0.0))
             .clamp(Vec3::new(0.2, 0.2, 0.0), Vec3::MAX);
+    }
+}
+
+fn move_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, keys: Res<Input<KeyCode>>) {
+    let mut camera_transform = camera_query.single_mut();
+
+    if keys.just_pressed(KeyCode::Right) {
+        camera_transform.translation.x += MOVEMENT_VAL;
+    } else if keys.just_pressed(KeyCode::Left) {
+        camera_transform.translation.x -= MOVEMENT_VAL;
+    } else if keys.just_pressed(KeyCode::Up) {
+        camera_transform.translation.y += MOVEMENT_VAL;
+    } else if keys.just_pressed(KeyCode::Down) {
+        camera_transform.translation.y -= MOVEMENT_VAL;
     }
 }
