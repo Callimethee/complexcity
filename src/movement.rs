@@ -9,9 +9,9 @@ use rand::{
 use crate::{building::BuildingType, person::Person, states::GameState};
 
 const MOVEMENT_SCALAR: f32 = 2.2;
-const IDLE_INTERACT: f32 = 3.0;
-const SOCIAL_INTERACT: f32 = 1.5;
-const BUILDING_INTERACT: f32 = 5.0;
+const IDLE_INTERACT: f32 = 2.5;
+const SOCIAL_INTERACT: f32 = 0.5;
+const BUILDING_INTERACT: f32 = 6.0;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub enum MovementDir {
@@ -67,7 +67,7 @@ impl Plugin for MovementPlugin {
 
 fn reset_movement_vector(mut person_query: Query<&mut Person>) {
     for mut person in &mut person_query {
-        person.movement_vector = Vec3::ZERO;
+        person.movement_vector = Vec2::ZERO;
     }
 }
 
@@ -123,7 +123,9 @@ fn move_relative_to(
     };
     moved_person.movement_vector += direction_mult
         * factor
-        * (destination.translation - moved_transform.translation).clamp_length_max(5.0);
+        * (destination.translation - moved_transform.translation)
+            .truncate()
+            .clamp_length_max(5.0);
 }
 
 fn social_movement(mut persons_query: Query<(&mut Person, &Transform)>) {
@@ -191,7 +193,7 @@ fn desire_movement(
                 BUILDING_INTERACT,
             );
         }
-        if person.health < 26.0 {
+        if person.health < 30.0 {
             move_relative_to(
                 &mut person,
                 p_transform,
@@ -227,7 +229,7 @@ fn desire_movement(
                 BUILDING_INTERACT,
             );
         }
-        if person.entertained < 10.0 {
+        if person.entertained < 20.0 {
             move_relative_to(
                 &mut person,
                 p_transform,

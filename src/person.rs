@@ -2,10 +2,12 @@ use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
 use crate::{
-    asset_loader::AssetHandles, building::BuildingType, movement::MovementDir, states::GameState,
+    asset_loader::AssetHandles, building::BuildingType, drag::Interactable, movement::MovementDir,
+    states::GameState,
 };
 
 pub const SPRITE_SCALE: Vec3 = Vec3::new(1.0, 1.0, 0.0);
+const SPRITE_SIZE: Vec3 = Vec3::new(16.0, 23.0, 0.0);
 const PERSON_LEVEL: f32 = 2.0;
 const INTERACTION_DISTANCE: f32 = 20.0;
 
@@ -32,9 +34,10 @@ pub struct Person {
     pub creativity: f32,
     pub satisfaction: f32,
     pub movement_direction: MovementDir,
-    pub movement_vector: Vec3,
+    pub movement_vector: Vec2,
     pub liked: Vec<i32>,
     pub disliked: Vec<i32>,
+    pub interact: Interactable,
 }
 
 #[derive(Bundle)]
@@ -56,7 +59,12 @@ impl Plugin for PersonPlugin {
             .add_systems(OnEnter(GameState::Playing), spawn_first_person)
             .add_systems(
                 Update,
-                (spawn_person, decrease_scores, increase_scores)
+                (
+                    spawn_person,
+                    decrease_scores,
+                    increase_scores,
+                    hitbox_follow,
+                )
                     .run_if(in_state(GameState::Playing)),
             )
             .add_systems(
@@ -84,7 +92,7 @@ fn spawn_first_person(
             creativity: 100.0,
             satisfaction: 50.0,
             movement_direction: MovementDir::PlusBoth,
-            movement_vector: Vec3::ZERO,
+            movement_vector: Vec2::ZERO,
             ..default()
         },
         sprite: SpriteBundle {
@@ -125,7 +133,7 @@ fn spawn_person(
                 creativity: 100.0,
                 satisfaction: 50.0,
                 movement_direction: MovementDir::PlusBoth,
-                movement_vector: Vec3::ZERO,
+                movement_vector: Vec2::ZERO,
                 ..default()
             },
             sprite: SpriteBundle {
@@ -172,7 +180,7 @@ fn decrease_scores(
             let needs_creation = rng.gen_bool(0.6);
             let needs_entertainment = rng.gen_bool(0.45);
             let needs_social = rng.gen_bool(0.4);
-            let health_incident = rng.gen_bool(0.05);
+            let health_incident = rng.gen_bool(0.01);
 
             if health_incident {
                 person.health = clamp_score(person.health - 75.0);
@@ -241,6 +249,15 @@ fn increase_scores(
 
 fn clamp_score(val: f32) -> f32 {
     val.clamp(0.0, 100.0)
+}
+
+fn hitbox_follow(mut persons_query: Query<(&mut Person, &Transform)>) {
+    for (mut person, transform) in &mut persons_query {
+        person.interact.bottom_left.x = transform.translation.x - SPRITE_SIZE.x / 2.0;
+        person.interact.bottom_left.y = transform.translation.y - SPRITE_SIZE.y / 2.0;
+        person.interact.top_right.x = transform.translation.x + SPRITE_SIZE.x / 2.0;
+        person.interact.top_right.y = transform.translation.y + SPRITE_SIZE.y / 2.0;
+    }
 }
 
 fn cleanup_persons(
