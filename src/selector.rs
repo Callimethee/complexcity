@@ -2,8 +2,10 @@ use bevy::prelude::*;
 
 use crate::{
     asset_loader::AssetHandles,
+    camera::CursorPosition,
     debug::TEXT_SIZE,
-    person::{Person, UsedPersons, SPRITE_SCALE},
+    drag::clicked_on,
+    person::{Person, SPRITE_SCALE},
     states::GameState,
 };
 
@@ -59,12 +61,12 @@ fn spawn_selector(mut commands: Commands, asset_handles: Res<AssetHandles>) {
 }
 
 fn follow_selected_person(
-    person_query: Query<(&Person, &Transform)>,
+    persons_query: Query<(&Person, &Transform)>,
     mut selector_query: Query<(&Selector, &mut Transform), Without<Person>>,
 ) {
     let (selector, mut sel_transform) = selector_query.single_mut();
 
-    for (person, transform) in &person_query {
+    for (person, transform) in &persons_query {
         if person.id == selector.selected {
             sel_transform.translation.x = transform.translation.x;
             sel_transform.translation.y = transform.translation.y;
@@ -113,13 +115,13 @@ fn spawn_person_info(mut commands: Commands) {
 fn display_person_info(
     mut text_query: Query<&mut Text, With<PersonInfoText>>,
     selector_query: Query<&Selector>,
-    person_query: Query<&Person>,
+    persons_query: Query<&Person>,
 ) {
     let mut text = text_query.single_mut();
     let selector = selector_query.single();
 
     text.sections[1].value = format!("{}", selector.selected);
-    for person in &person_query {
+    for person in &persons_query {
         if person.id == selector.selected {
             text.sections[3].value = format!("{:.0}", person.shelter);
             text.sections[5].value = format!("{:.0}", person.hunger);
@@ -135,14 +137,18 @@ fn display_person_info(
 
 fn switch_selected(
     mut selector_query: Query<&mut Selector>,
-    keys: Res<Input<KeyCode>>,
-    used_ids: Res<UsedPersons>,
+    persons_query: Query<&Person>,
+    buttons: Res<Input<MouseButton>>,
+    cursor_pos: Res<CursorPosition>,
 ) {
     let mut selector = selector_query.single_mut();
-    if keys.just_pressed(KeyCode::Right) {
-        selector.selected = (selector.selected + 1).min(*used_ids.list.iter().max().unwrap())
-    } else if keys.just_pressed(KeyCode::Left) {
-        selector.selected = (selector.selected - 1).max(*used_ids.list.iter().min().unwrap())
+    if buttons.just_pressed(MouseButton::Left) {
+        for person in &persons_query {
+            if clicked_on(&cursor_pos, &person.interact) {
+                selector.selected = person.id;
+                break;
+            }
+        }
     }
 }
 
