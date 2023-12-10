@@ -4,7 +4,6 @@ use crate::{
     asset_loader::AssetHandles,
     debug::TEXT_SIZE,
     drag::{Draggable, Interactable},
-    score::Score,
     states::GameState,
 };
 
@@ -21,6 +20,40 @@ const POOL_SIZE: Vec2 = Vec2::new(64.0, 54.0);
 const RESTAURANT_SIZE: Vec2 = Vec2::new(64.0, 48.0);
 const CREATIVE_SIZE: Vec2 = Vec2::new(68.0, 42.0);
 const UNDERGROUND_SIZE: Vec2 = Vec2::new(32.0, 48.0);
+const TREE_SIZE: Vec2 = Vec2::new(32.0, 48.0);
+const LAMP_SIZE: Vec2 = Vec2::new(10.0, 46.0);
+
+#[derive(Resource, Default, Debug)]
+struct BuildingAvailable {
+    house: bool,
+    forum: bool,
+    cinema: bool,
+    hospital: bool,
+    pool: bool,
+    restaurant: bool,
+    creative: bool,
+}
+
+#[derive(Resource, Debug)]
+struct HouseTimer(Timer);
+
+#[derive(Resource, Debug)]
+struct ForumTimer(Timer);
+
+#[derive(Resource, Debug)]
+struct CinemaTimer(Timer);
+
+#[derive(Resource, Debug)]
+struct HospitalTimer(Timer);
+
+#[derive(Resource, Debug)]
+struct PoolTimer(Timer);
+
+#[derive(Resource, Debug)]
+struct RestaurantTimer(Timer);
+
+#[derive(Resource, Debug)]
+struct CreativeTimer(Timer);
 
 #[derive(Component, Debug)]
 struct BuildingInfoText;
@@ -35,6 +68,8 @@ pub enum BuildingType {
     Restaurant,
     Creative,
     Underground,
+    Tree,
+    Lamp,
 }
 
 #[derive(Bundle)]
@@ -48,11 +83,37 @@ pub struct BuildingPlugin;
 
 impl Plugin for BuildingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), spawn_info_text)
+        app.insert_resource(BuildingAvailable { ..default() })
+            .insert_resource(HouseTimer(Timer::from_seconds(11.0, TimerMode::Repeating)))
+            .insert_resource(ForumTimer(Timer::from_seconds(55.0, TimerMode::Repeating)))
+            .insert_resource(CinemaTimer(Timer::from_seconds(99.0, TimerMode::Repeating)))
+            .insert_resource(HospitalTimer(Timer::from_seconds(
+                80.0,
+                TimerMode::Repeating,
+            )))
+            .insert_resource(PoolTimer(Timer::from_seconds(109.0, TimerMode::Repeating)))
+            .insert_resource(RestaurantTimer(Timer::from_seconds(
+                27.0,
+                TimerMode::Repeating,
+            )))
+            .insert_resource(CreativeTimer(Timer::from_seconds(
+                66.0,
+                TimerMode::Repeating,
+            )))
+            .add_systems(OnEnter(GameState::Playing), spawn_info_text)
             .add_systems(
                 Update,
-                (trigger_spawn, hitbox_follow, destack_buildings)
+                (
+                    update_info_text,
+                    trigger_spawn,
+                    hitbox_follow,
+                    destack_buildings,
+                )
                     .run_if(in_state(GameState::Playing)),
+            )
+            .add_systems(
+                OnExit(GameState::Playing),
+                (cleanup_buildings, cleanup_text),
             );
     }
 }
@@ -64,10 +125,21 @@ fn spawn_info_text(mut commands: Commands) {
     };
 
     commands.spawn((
-        TextBundle::from_sections([TextSection::new(
-            "H: House/R: Restaurant/F: Forum/C: Cinema/O: Hospital/P: Pool/E: Creative supplies",
-            text_style,
-        )])
+        TextBundle::from_sections([
+            TextSection::new("H: House", text_style.clone()),
+            TextSection::new("/", text_style.clone()),
+            TextSection::new("R: Restaurant", text_style.clone()),
+            TextSection::new("/", text_style.clone()),
+            TextSection::new("F: Forum", text_style.clone()),
+            TextSection::new("/", text_style.clone()),
+            TextSection::new("C: Cinema", text_style.clone()),
+            TextSection::new("/", text_style.clone()),
+            TextSection::new("O: Hospital", text_style.clone()),
+            TextSection::new("/", text_style.clone()),
+            TextSection::new("P: Pool", text_style.clone()),
+            TextSection::new("/", text_style.clone()),
+            TextSection::new("E: Creative supplies", text_style),
+        ])
         .with_style(Style {
             position_type: PositionType::Absolute,
             bottom: Val::VMin(1.0),
@@ -79,32 +151,137 @@ fn spawn_info_text(mut commands: Commands) {
     ));
 }
 
+fn update_info_text(
+    mut text_query: Query<&mut Text, With<BuildingInfoText>>,
+    available: Res<BuildingAvailable>,
+) {
+    let mut text = text_query.single_mut();
+
+    let red = TextStyle {
+        font_size: TEXT_SIZE,
+        color: Color::RED,
+        ..default()
+    };
+    let green = TextStyle {
+        font_size: TEXT_SIZE,
+        color: Color::GREEN,
+        ..default()
+    };
+
+    if available.house {
+        text.sections[0].style = green.clone();
+    } else {
+        text.sections[0].style = red.clone();
+    }
+    if available.restaurant {
+        text.sections[2].style = green.clone();
+    } else {
+        text.sections[2].style = red.clone();
+    }
+    if available.forum {
+        text.sections[4].style = green.clone();
+    } else {
+        text.sections[4].style = red.clone();
+    }
+    if available.cinema {
+        text.sections[6].style = green.clone();
+    } else {
+        text.sections[6].style = red.clone();
+    }
+    if available.hospital {
+        text.sections[8].style = green.clone();
+    } else {
+        text.sections[8].style = red.clone();
+    }
+    if available.pool {
+        text.sections[10].style = green.clone();
+    } else {
+        text.sections[10].style = red.clone();
+    }
+    if available.creative {
+        text.sections[12].style = green;
+    } else {
+        text.sections[12].style = red;
+    }
+}
+
 fn trigger_spawn(
     mut commands: Commands,
     asset_handles: Res<AssetHandles>,
     keys: Res<Input<KeyCode>>,
-    score: Res<Score>,
+    time: Res<Time>,
+    mut available: ResMut<BuildingAvailable>,
+    mut t_house: ResMut<HouseTimer>,
+    mut t_forum: ResMut<ForumTimer>,
+    mut t_cinema: ResMut<CinemaTimer>,
+    mut t_hospital: ResMut<HospitalTimer>,
+    mut t_pool: ResMut<PoolTimer>,
+    mut t_restaurant: ResMut<RestaurantTimer>,
+    mut t_creative: ResMut<CreativeTimer>,
 ) {
-    if keys.just_pressed(KeyCode::H) {
-        spawn_building(BuildingType::House, &mut commands, &asset_handles)
+    if !available.house {
+        t_house.0.tick(time.delta());
     }
-    if keys.just_pressed(KeyCode::F) && score.0 > 20.0 {
-        spawn_building(BuildingType::Forum, &mut commands, &asset_handles)
+    if !available.forum {
+        t_forum.0.tick(time.delta());
     }
-    if keys.just_pressed(KeyCode::C) {
-        spawn_building(BuildingType::Cinema, &mut commands, &asset_handles)
+    if !available.cinema {
+        t_cinema.0.tick(time.delta());
     }
-    if keys.just_pressed(KeyCode::O) {
-        spawn_building(BuildingType::Hospital, &mut commands, &asset_handles)
+    if !available.hospital {
+        t_hospital.0.tick(time.delta());
     }
-    if keys.just_pressed(KeyCode::P) {
-        spawn_building(BuildingType::Pool, &mut commands, &asset_handles)
+    if !available.pool {
+        t_pool.0.tick(time.delta());
     }
-    if keys.just_pressed(KeyCode::R) {
-        spawn_building(BuildingType::Restaurant, &mut commands, &asset_handles)
+    if !available.restaurant {
+        t_restaurant.0.tick(time.delta());
     }
-    if keys.just_pressed(KeyCode::E) {
-        spawn_building(BuildingType::Creative, &mut commands, &asset_handles)
+    if !available.creative {
+        t_creative.0.tick(time.delta());
+    }
+
+    available.house = t_house.0.just_finished();
+    available.forum = t_forum.0.just_finished();
+    available.cinema = t_cinema.0.just_finished();
+    available.hospital = t_hospital.0.just_finished();
+    available.pool = t_pool.0.just_finished();
+    available.restaurant = t_restaurant.0.just_finished();
+    available.creative = t_creative.0.just_finished();
+
+    if keys.just_pressed(KeyCode::H) && available.house {
+        spawn_building(BuildingType::House, &mut commands, &asset_handles);
+        available.house = false;
+    }
+    if keys.just_pressed(KeyCode::F) && available.forum {
+        spawn_building(BuildingType::Forum, &mut commands, &asset_handles);
+        available.forum = false;
+    }
+    if keys.just_pressed(KeyCode::C) && available.cinema {
+        spawn_building(BuildingType::Cinema, &mut commands, &asset_handles);
+        available.cinema = false;
+    }
+    if keys.just_pressed(KeyCode::O) && available.hospital {
+        spawn_building(BuildingType::Hospital, &mut commands, &asset_handles);
+        available.hospital = false;
+    }
+    if keys.just_pressed(KeyCode::P) && available.pool {
+        spawn_building(BuildingType::Pool, &mut commands, &asset_handles);
+        available.pool = false;
+    }
+    if keys.just_pressed(KeyCode::R) && available.restaurant {
+        spawn_building(BuildingType::Restaurant, &mut commands, &asset_handles);
+        available.restaurant = false;
+    }
+    if keys.just_pressed(KeyCode::E) && available.creative {
+        spawn_building(BuildingType::Creative, &mut commands, &asset_handles);
+        available.creative = false;
+    }
+    if keys.just_pressed(KeyCode::T) {
+        spawn_building(BuildingType::Tree, &mut commands, &asset_handles);
+    }
+    if keys.just_pressed(KeyCode::L) {
+        spawn_building(BuildingType::Lamp, &mut commands, &asset_handles);
     }
     // if keys.just_pressed(KeyCode::U) {
     //     spawn_building(BuildingType::Underground, &mut commands, &asset_handles)
@@ -125,6 +302,8 @@ fn spawn_building(
         BuildingType::Restaurant => asset_handles.restaurant.clone(),
         BuildingType::Creative => asset_handles.creative.clone(),
         BuildingType::Underground => asset_handles.underground.clone(),
+        BuildingType::Tree => asset_handles.tree.clone(),
+        BuildingType::Lamp => asset_handles.lamp.clone(),
     };
     let top_right = get_size_from_type(&b_type);
 
@@ -168,6 +347,8 @@ fn get_size_from_type(b_type: &BuildingType) -> Vec2 {
         BuildingType::Restaurant => RESTAURANT_SIZE,
         BuildingType::Creative => CREATIVE_SIZE,
         BuildingType::Underground => UNDERGROUND_SIZE,
+        BuildingType::Tree => TREE_SIZE,
+        BuildingType::Lamp => LAMP_SIZE,
     }
 }
 
@@ -186,5 +367,17 @@ fn destack_buildings(
                 transform_2.translation.x += b_size.x / 2.0;
             }
         }
+    }
+}
+
+fn cleanup_buildings(mut commands: Commands, buildings_query: Query<Entity, With<BuildingType>>) {
+    for entity in &buildings_query {
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
+fn cleanup_text(mut commands: Commands, text_query: Query<Entity, With<BuildingInfoText>>) {
+    for entity in &text_query {
+        commands.entity(entity).despawn_recursive();
     }
 }
