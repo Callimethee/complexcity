@@ -4,7 +4,7 @@ html {
 }
 
 body {
-    background-color: lightgray;
+    background-color: rgb(98, 98, 98);
     margin: 0;
     display: flex;
     justify-content: center;
@@ -12,8 +12,8 @@ body {
 }
 
 .game-container {
-    width: 1333px;
-    height: 1000px;
+    width: 1280px;
+    height: 680px;
     display: flex;
     justify-content: center;
     align-items: center;
