@@ -10,8 +10,16 @@ use crate::{building::BuildingType, person::Person, states::GameState};
 
 const MOVEMENT_SCALAR: f32 = 2.2;
 const IDLE_INTERACT: f32 = 2.5;
-const SOCIAL_INTERACT: f32 = 0.5;
+const SOCIAL_INTERACT: f32 = 1.0;
 const BUILDING_INTERACT: f32 = 6.0;
+
+pub const HUNGER_THRESHOLD: f32 = 25.0;
+pub const SHELTER_THRESHOLD: f32 = 10.0;
+pub const SOCIAL_THRESHOLD: f32 = 25.0;
+pub const ENTERT_THRESHOLD: f32 = 20.0;
+pub const HEALTH_THRESHOLD: f32 = 30.0;
+pub const SPORT_THRESHOLD: f32 = 20.0;
+pub const CREAT_THRESHOLD: f32 = 20.0;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub enum MovementDir {
@@ -175,61 +183,61 @@ fn desire_movement(
     buildings_query: Query<(&BuildingType, &Transform)>,
 ) {
     for (mut person, p_transform) in &mut persons_query {
-        if person.hunger < 25.0 {
+        if person.hunger < HUNGER_THRESHOLD {
             move_relative_to(
                 &mut person,
                 p_transform,
                 &get_closest_of_interest(p_transform, BuildingType::Restaurant, &buildings_query),
                 true,
-                BUILDING_INTERACT,
+                4.0 * BUILDING_INTERACT,
             );
         }
-        if person.shelter < 10.0 {
+        if person.shelter < SHELTER_THRESHOLD {
             move_relative_to(
                 &mut person,
                 p_transform,
                 &get_closest_of_interest(p_transform, BuildingType::House, &buildings_query),
                 true,
-                BUILDING_INTERACT,
+                0.5 * BUILDING_INTERACT,
             );
         }
-        if person.health < 30.0 {
+        if person.health < HEALTH_THRESHOLD {
             move_relative_to(
                 &mut person,
                 p_transform,
                 &get_closest_of_interest(p_transform, BuildingType::Hospital, &buildings_query),
                 true,
-                BUILDING_INTERACT,
+                5.0 * BUILDING_INTERACT,
             );
         }
-        if person.social < 25.0 {
+        if person.social < SOCIAL_THRESHOLD {
             move_relative_to(
                 &mut person,
                 p_transform,
                 &get_closest_of_interest(p_transform, BuildingType::Forum, &buildings_query),
                 true,
-                BUILDING_INTERACT,
+                3.0 * BUILDING_INTERACT,
             );
         }
-        if person.creativity < 20.0 {
+        if person.creativity < CREAT_THRESHOLD {
             move_relative_to(
                 &mut person,
                 p_transform,
                 &get_closest_of_interest(p_transform, BuildingType::Creative, &buildings_query),
                 true,
-                BUILDING_INTERACT,
+                2.0 * BUILDING_INTERACT,
             );
         }
-        if person.sport < 20.0 {
+        if person.sport < SPORT_THRESHOLD {
             move_relative_to(
                 &mut person,
                 p_transform,
                 &get_closest_of_interest(p_transform, BuildingType::Pool, &buildings_query),
                 true,
-                BUILDING_INTERACT,
+                0.6 * BUILDING_INTERACT,
             );
         }
-        if person.entertained < 20.0 {
+        if person.entertained < ENTERT_THRESHOLD {
             move_relative_to(
                 &mut person,
                 p_transform,
@@ -262,8 +270,11 @@ fn get_closest_of_interest(
 
 fn resolve_movements(mut person_query: Query<(&mut Person, &mut Transform)>, time: Res<Time>) {
     for (mut person, mut transform) in &mut person_query {
+        if person.movement_vector.length_squared() == 0.0 {
+            person.movement_vector += Vec2::new(0.01, 0.01);
+        }
         person.movement_vector =
-            person.movement_vector.clamp_length_max(6.5) * MOVEMENT_SCALAR * time.delta_seconds();
+            person.movement_vector.clamp_length(0.25, 6.5) * MOVEMENT_SCALAR * time.delta_seconds();
         transform.translation.x += person.movement_vector.x;
         transform.translation.y += person.movement_vector.y;
     }
