@@ -9,7 +9,7 @@ use rand::{
 use crate::{building::BuildingType, person::Person, states::GameState};
 
 /// A general scalar applied to all movements.
-const MOVEMENT_SCALAR: f32 = 2.2;
+const BASE_MOVEMENT_SCALAR: f32 = 2.2;
 /// The strength of idle interactions.
 const IDLE_INTERACT: f32 = 2.5;
 /// The strength of social interactions.
@@ -25,6 +25,9 @@ pub const ENTERT_THRESHOLD: f32 = 20.0;
 pub const HEALTH_THRESHOLD: f32 = 30.0;
 pub const SPORT_THRESHOLD: f32 = 20.0;
 pub const CREAT_THRESHOLD: f32 = 20.0;
+
+#[derive(Resource, Debug)]
+struct MovementScalar(f32);
 
 /// The idle movement direction.
 #[derive(Debug, Default, Clone, Copy)]
@@ -64,13 +67,19 @@ impl Plugin for MovementPlugin {
             2.9,
             TimerMode::Repeating,
         )))
+        .insert_resource(MovementScalar(BASE_MOVEMENT_SCALAR))
         .add_systems(
             PreUpdate,
             reset_movement_vector.run_if(in_state(GameState::Playing)),
         )
         .add_systems(
             Update,
-            (move_idle_persons, social_movement, desire_movement)
+            (
+                increase_all_movt,
+                move_idle_persons,
+                social_movement,
+                desire_movement,
+            )
                 .run_if(in_state(GameState::Playing)),
         )
         .add_systems(
@@ -83,6 +92,14 @@ impl Plugin for MovementPlugin {
 fn reset_movement_vector(mut person_query: Query<&mut Person>) {
     for mut person in &mut person_query {
         person.movement_vector = Vec2::ZERO;
+    }
+}
+
+fn increase_all_movt(keys: Res<Input<KeyCode>>, mut movt_scalar: ResMut<MovementScalar>) {
+    if keys.just_pressed(KeyCode::Return) {
+        movt_scalar.0 *= 3.0;
+    } else if keys.just_released(KeyCode::Return) {
+        movt_scalar.0 /= 3.0;
     }
 }
 
@@ -280,7 +297,11 @@ fn get_closest_of_interest(
     *closest_of_interest
 }
 
-fn resolve_movements(mut person_query: Query<(&mut Person, &mut Transform)>, time: Res<Time>) {
+fn resolve_movements(
+    mut person_query: Query<(&mut Person, &mut Transform)>,
+    time: Res<Time>,
+    movt_scalar: Res<MovementScalar>,
+) {
     // At the end of the frame, apply the final movt vector
     for (mut person, mut transform) in &mut person_query {
         if person.movement_vector.length_squared() == 0.0 {
@@ -288,7 +309,7 @@ fn resolve_movements(mut person_query: Query<(&mut Person, &mut Transform)>, tim
             person.movement_vector += Vec2::new(0.01, 0.01);
         }
         person.movement_vector =
-            person.movement_vector.clamp_length(0.25, 6.5) * MOVEMENT_SCALAR * time.delta_seconds();
+            person.movement_vector.clamp_length(0.25, 6.5) * movt_scalar.0 * time.delta_seconds();
         transform.translation.x += person.movement_vector.x;
         transform.translation.y += person.movement_vector.y;
     }
