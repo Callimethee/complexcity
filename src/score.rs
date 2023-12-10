@@ -41,7 +41,13 @@ fn spawn_score_display(mut commands: Commands) {
                 color: Color::GOLD,
                 ..default()
             }),
-        ]),
+        ])
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            right: Val::VMax(1.0),
+            top: Val::VMin(1.0),
+            ..default()
+        }),
         ScoreText,
     ));
 }
