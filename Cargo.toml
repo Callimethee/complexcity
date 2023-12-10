@@ -1,6 +1,6 @@
 [package]
 name = "complexcity"
-version = "0.1.0"
+version = "0.8.0"
 edition = "2021"
 authors = ["Calliméthée"]
 publish = false
@@ -15,21 +15,15 @@ opt-level = 1
 opt-level = 3
 
 [profile.release]
-lto = true
-codegen-units = 1
-
-# The profile that 'cargo dist' will build with
-[profile.dist]
-inherits = "release"
 lto = "thin"
+codegen-units = 1
 
 [features]
 dev = ["bevy/dynamic_linking"]
 
-# All of Bevy's default features exept for the audio related ones (bevy_audio, vorbis), since they clash with bevy_kira_audio
-#   and android_shared_stdcxx, since that is covered in `mobile`
+
 [dependencies]
-bevy = { version = "0.12.1" }
+bevy = "0.12.1"
 rand = "0.8.5"
 
 [build-dependencies]
