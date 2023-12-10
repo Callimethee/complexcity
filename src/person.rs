@@ -238,9 +238,9 @@ fn increase_scores(
                     }
                     BuildingType::Creative => {
                         person.creativity =
-                            clamp_score(person.creativity + 25.0 * time.delta_seconds())
+                            clamp_score(person.creativity + 25.0 * time.delta_seconds());
                     }
-                    BuildingType::Underground => todo!(),
+                    _ => {}
                 }
             }
         }
