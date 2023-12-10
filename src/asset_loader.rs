@@ -12,7 +12,6 @@ pub struct AssetHandles {
     pub pool: Handle<Image>,
     pub restaurant: Handle<Image>,
     pub creative: Handle<Image>,
-    pub underground: Handle<Image>,
     pub tree: Handle<Image>,
     pub lamp: Handle<Image>,
 }
@@ -38,7 +37,6 @@ fn load_assets(mut asset_handles: ResMut<AssetHandles>, asset_server: Res<AssetS
     asset_handles.pool = asset_server.load("pool.png");
     asset_handles.restaurant = asset_server.load("restaurant.png");
     asset_handles.creative = asset_server.load("creative_mart.png");
-    asset_handles.underground = asset_server.load("underground_passage.png");
     asset_handles.tree = asset_server.load("tree.png");
     asset_handles.lamp = asset_server.load("lamp.png");
 }
