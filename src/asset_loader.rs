@@ -26,6 +26,7 @@ impl Plugin for AssetLoaderPlugin {
     }
 }
 
+/// Load assets once, provide handles for the rest of the game
 fn load_assets(mut asset_handles: ResMut<AssetHandles>, asset_server: Res<AssetServer>) {
     asset_handles.person = asset_server.load("Adam_idle_front.png");
     asset_handles.street = asset_server.load("street.png");

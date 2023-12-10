@@ -2,12 +2,14 @@ use bevy::prelude::*;
 
 use crate::{camera::CursorPosition, states::GameState};
 
+/// Component for all Draggable entities.
 #[derive(Debug, Default, Component)]
 pub struct Draggable {
     pub interact: Interactable,
     pub being_dragged: bool,
 }
 
+/// Component for all click-interactable entities.
 #[derive(Component, Default, Debug, Clone)]
 pub struct Interactable {
     pub bottom_left: Vec2,
@@ -49,6 +51,7 @@ fn dragging_system(
     }
 }
 
+/// Returns `true` if the cursor is within the interactable's bounding box
 pub fn clicked_on(cursor_pos: &Res<CursorPosition>, interactable: &Interactable) -> bool {
     cursor_pos.0.x > interactable.bottom_left.x
         && cursor_pos.0.y > interactable.bottom_left.y

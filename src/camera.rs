@@ -4,7 +4,7 @@ use crate::states::GameState;
 
 // for z-ordering
 const CAMERA_LEVEL: f32 = 20.0;
-const MOVEMENT_VAL: f32 = 5.0;
+const MOVEMENT_VAL: f32 = 50.0;
 
 /// The position of the cursor, in world coordinates.
 #[derive(Resource, Debug, Default)]
@@ -66,16 +66,23 @@ fn zoom_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, keys: Re
     }
 }
 
-fn move_camera(mut camera_query: Query<&mut Transform, With<Camera2d>>, keys: Res<Input<KeyCode>>) {
+fn move_camera(
+    mut camera_query: Query<&mut Transform, With<Camera2d>>,
+    keys: Res<Input<KeyCode>>,
+    time: Res<Time>,
+) {
     let mut camera_transform = camera_query.single_mut();
 
-    if keys.just_pressed(KeyCode::Right) {
-        camera_transform.translation.x += MOVEMENT_VAL;
-    } else if keys.just_pressed(KeyCode::Left) {
-        camera_transform.translation.x -= MOVEMENT_VAL;
-    } else if keys.just_pressed(KeyCode::Up) {
-        camera_transform.translation.y += MOVEMENT_VAL;
-    } else if keys.just_pressed(KeyCode::Down) {
-        camera_transform.translation.y -= MOVEMENT_VAL;
+    if keys.pressed(KeyCode::Right) {
+        camera_transform.translation.x += MOVEMENT_VAL * time.delta_seconds();
+    }
+    if keys.pressed(KeyCode::Left) {
+        camera_transform.translation.x -= MOVEMENT_VAL * time.delta_seconds();
+    }
+    if keys.pressed(KeyCode::Up) {
+        camera_transform.translation.y += MOVEMENT_VAL * time.delta_seconds();
+    }
+    if keys.pressed(KeyCode::Down) {
+        camera_transform.translation.y -= MOVEMENT_VAL * time.delta_seconds();
     }
 }

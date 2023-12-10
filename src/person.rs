@@ -8,7 +8,11 @@ use crate::{
 
 pub const SPRITE_SCALE: Vec3 = Vec3::new(1.0, 1.0, 0.0);
 const SPRITE_SIZE: Vec3 = Vec3::new(16.0, 23.0, 0.0);
+
+// for z-ordering
 const PERSON_LEVEL: f32 = 2.0;
+
+/// The distance below which a building applies its effect on a person.
 const INTERACTION_DISTANCE: f32 = 20.0;
 
 #[derive(Resource)]
@@ -33,6 +37,7 @@ pub struct Person {
     pub sport: f32,
     pub creativity: f32,
     pub satisfaction: f32,
+    // Idle movt direction
     pub movement_direction: MovementDir,
     pub movement_vector: Vec2,
     pub liked: Vec<i32>,
@@ -177,10 +182,10 @@ fn decrease_scores(
             person.hunger = clamp_score(person.hunger - 0.75);
 
             let needs_sport = rng.gen_bool(0.7);
-            let needs_creation = rng.gen_bool(0.6);
+            let needs_creation = rng.gen_bool(0.68);
             let needs_entertainment = rng.gen_bool(0.45);
             let needs_social = rng.gen_bool(0.4);
-            let health_incident = rng.gen_bool(0.01);
+            let health_incident = rng.gen_bool(0.005);
 
             if health_incident {
                 person.health = clamp_score(person.health - 75.0);

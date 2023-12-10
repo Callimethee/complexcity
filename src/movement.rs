@@ -8,11 +8,16 @@ use rand::{
 
 use crate::{building::BuildingType, person::Person, states::GameState};
 
+/// A general scalar applied to all movements.
 const MOVEMENT_SCALAR: f32 = 2.2;
+/// The strength of idle interactions.
 const IDLE_INTERACT: f32 = 2.5;
+/// The strength of social interactions.
 const SOCIAL_INTERACT: f32 = 1.0;
+/// The strength of the attraction of buildings.
 const BUILDING_INTERACT: f32 = 6.0;
 
+// The various thresholds before each stat becomes a problem
 pub const HUNGER_THRESHOLD: f32 = 25.0;
 pub const SHELTER_THRESHOLD: f32 = 10.0;
 pub const SOCIAL_THRESHOLD: f32 = 25.0;
@@ -21,6 +26,7 @@ pub const HEALTH_THRESHOLD: f32 = 30.0;
 pub const SPORT_THRESHOLD: f32 = 20.0;
 pub const CREAT_THRESHOLD: f32 = 20.0;
 
+/// The idle movement direction.
 #[derive(Debug, Default, Clone, Copy)]
 pub enum MovementDir {
     #[default]
@@ -46,6 +52,7 @@ impl Distribution<MovementDir> for Standard {
     }
 }
 
+/// Timer for idle direction changes.
 #[derive(Resource, Debug)]
 struct IdleDirectionTimer(Timer);
 
@@ -54,7 +61,7 @@ pub struct MovementPlugin;
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(IdleDirectionTimer(Timer::from_seconds(
-            3.0,
+            2.9,
             TimerMode::Repeating,
         )))
         .add_systems(
@@ -101,6 +108,7 @@ fn move_idle_persons(
                 person.movement_vector.y += IDLE_INTERACT * 1.0;
             }
             MovementDir::PlusBoth => {
+                // Multiply by 1/sqrt(2) to get unit length even with diagonal movt
                 person.movement_vector.x += IDLE_INTERACT * 1.0 / SQRT_2;
                 person.movement_vector.y += IDLE_INTERACT * 1.0 / SQRT_2;
             }
@@ -129,6 +137,7 @@ fn move_relative_to(
         true => 1.0,
         false => -1.0,
     };
+    // clamp length to avoid faraway objects affecting the movt too much
     moved_person.movement_vector += direction_mult
         * factor
         * (destination.translation - moved_transform.translation)
@@ -141,6 +150,7 @@ fn social_movement(mut persons_query: Query<(&mut Person, &Transform)>) {
     while let Some([(mut person_1, transform_1), (mut person_2, transform_2)]) =
         combinations.fetch_next()
     {
+        // If person X likes person Y, move them towards person Y and vice-versa
         if person_1.liked.contains(&person_2.id) {
             move_relative_to(
                 &mut person_1,
@@ -182,6 +192,7 @@ fn desire_movement(
     mut persons_query: Query<(&mut Person, &Transform)>,
     buildings_query: Query<(&BuildingType, &Transform)>,
 ) {
+    // If problem, move towards the closest building that solves the problem
     for (mut person, p_transform) in &mut persons_query {
         if person.hunger < HUNGER_THRESHOLD {
             move_relative_to(
@@ -254,6 +265,7 @@ fn get_closest_of_interest(
     desired_type: BuildingType,
     buildings_query: &Query<(&BuildingType, &Transform)>,
 ) -> Transform {
+    // Get the transform of the closest building of the given type
     let mut closest_of_interest = p_transform;
     let mut min_distance_of_interest = f32::MAX;
     for (b_type, b_transform) in buildings_query {
@@ -269,8 +281,10 @@ fn get_closest_of_interest(
 }
 
 fn resolve_movements(mut person_query: Query<(&mut Person, &mut Transform)>, time: Res<Time>) {
+    // At the end of the frame, apply the final movt vector
     for (mut person, mut transform) in &mut person_query {
         if person.movement_vector.length_squared() == 0.0 {
+            // This is here to avoid NaN values when using clamp_length with a non-zero min
             person.movement_vector += Vec2::new(0.01, 0.01);
         }
         person.movement_vector =

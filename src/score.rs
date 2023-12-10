@@ -44,6 +44,7 @@ fn spawn_score_display(mut commands: Commands) {
         ])
         .with_style(Style {
             position_type: PositionType::Absolute,
+            // Top right of the window
             right: Val::VMax(1.0),
             top: Val::VMin(1.0),
             ..default()
@@ -57,6 +58,7 @@ fn update_score(
     persons_query: Query<&Person>,
     used_ids: Res<UsedPersons>,
 ) {
+    // Score is the average satisfaction (for now)
     score.0 = 0.0;
     for person in &persons_query {
         score.0 += person.satisfaction;

@@ -13,6 +13,7 @@ use crate::{
     states::GameState,
 };
 
+// The sentence corresponding to each problem
 const SHELTER_SENTENCE: &str = "\nI need a comfy home...";
 const HUNGER_SENTENCE: &str = "\nI could eat a horse!";
 const SOCIAL_SENTENCE: &str = "\nI need friends...";
@@ -21,6 +22,7 @@ const HEALTH_SENTENCE: &str = "\nI don't feel so good...";
 const SPORT_SENTENCE: &str = "\nI have energy to spare!";
 const CREAT_SENTENCE: &str = "\nI feel like creating something today!";
 
+// for z-ordering
 const SELECTOR_LEVEL: f32 = 10.0;
 
 #[derive(Resource, Debug, Default)]
@@ -84,6 +86,7 @@ fn spawn_selector(mut commands: Commands, asset_handles: Res<AssetHandles>) {
     });
 }
 
+/// Make the selector follow the selected person
 fn follow_selected_person(
     persons_query: Query<(&Person, &Transform)>,
     mut selector_query: Query<(&Selector, &mut Transform), Without<Person>>,
@@ -143,6 +146,7 @@ fn spawn_person_info(mut commands: Commands) {
     ));
 }
 
+/// Update the display of all scores as well as the problems list
 fn update_person_info(
     mut text_query: Query<&mut Text, With<PersonInfoText>>,
     selector_query: Query<&Selector>,
@@ -163,6 +167,7 @@ fn update_person_info(
             text.sections[13].value = format!("{:.0}", person.sport);
             text.sections[15].value = format!("{:.0}", person.creativity);
             text.sections[17].value = format!("{:.0}", person.satisfaction);
+
             if person.shelter < SHELTER_THRESHOLD && !problems.shelter {
                 text.sections[19].value.push_str(SHELTER_SENTENCE);
                 problems.shelter = true;
@@ -170,6 +175,7 @@ fn update_person_info(
                 text.sections[19].value = text.sections[19].value.replace(SHELTER_SENTENCE, "");
                 problems.shelter = false;
             }
+
             if person.hunger < HUNGER_THRESHOLD && !problems.hunger {
                 text.sections[19].value.push_str(HUNGER_SENTENCE);
                 problems.hunger = true;
@@ -177,6 +183,7 @@ fn update_person_info(
                 text.sections[19].value = text.sections[19].value.replace(HUNGER_SENTENCE, "");
                 problems.hunger = false;
             }
+
             if person.social < SOCIAL_THRESHOLD && !problems.social {
                 text.sections[19].value.push_str(SOCIAL_SENTENCE);
                 problems.social = true;
@@ -184,6 +191,7 @@ fn update_person_info(
                 text.sections[19].value = text.sections[19].value.replace(SOCIAL_SENTENCE, "");
                 problems.social = false;
             }
+
             if person.entertained < ENTERT_THRESHOLD && !problems.entertained {
                 text.sections[19].value.push_str(ENTERT_SENTENCE);
                 problems.entertained = true;
@@ -191,6 +199,7 @@ fn update_person_info(
                 text.sections[19].value = text.sections[19].value.replace(ENTERT_SENTENCE, "");
                 problems.entertained = false;
             }
+
             if person.health < HEALTH_THRESHOLD && !problems.health {
                 text.sections[19].value.push_str(HEALTH_SENTENCE);
                 problems.health = true;
@@ -198,6 +207,7 @@ fn update_person_info(
                 text.sections[19].value = text.sections[19].value.replace(HEALTH_SENTENCE, "");
                 problems.health = false;
             }
+
             if person.sport < SPORT_THRESHOLD && !problems.sport {
                 text.sections[19].value.push_str(SPORT_SENTENCE);
                 problems.sport = true;
@@ -205,6 +215,7 @@ fn update_person_info(
                 text.sections[19].value = text.sections[19].value.replace(SPORT_SENTENCE, "");
                 problems.sport = false;
             }
+
             if person.creativity < CREAT_THRESHOLD && !problems.creativity {
                 text.sections[19].value.push_str(CREAT_SENTENCE);
                 problems.creativity = true;
@@ -232,6 +243,7 @@ fn switch_selected(
             }
         }
     } else if keys.just_pressed(KeyCode::Tab) {
+        // Select the least satisfied person
         let mut min_satis = 100.0;
         let mut min_id = 0;
         for person in &persons_query {

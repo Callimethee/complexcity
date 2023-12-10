@@ -32,13 +32,16 @@ fn main() {
     App::new()
         // Built-ins
         .insert_resource(ClearColor(Color::rgb(0.1, 0.1, 0.3)))
+        // No anti-aliasing for pixel art
         .insert_resource(Msaa::Off)
+        // This avoid breaking web builds
         .insert_resource(AssetMetaCheck::Never)
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Complexcity".to_string(),
                 canvas: Some("#bevy".to_owned()),
                 fit_canvas_to_parent: true,
+                // Let web shortcuts work (like f5)
                 prevent_default_event_handling: false,
                 ..default()
             }),

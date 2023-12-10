@@ -17,6 +17,7 @@ impl Plugin for MenuPlugin {
 }
 
 fn spawn_main_menu(mut commands: Commands) {
+    // Spawn a rectangular button in the center of the screen that says "Play"
     commands
         .spawn((
             NodeBundle {
@@ -63,6 +64,7 @@ fn click_buttons(
     interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
+    // Note: this works because there's only the Play button
     for interaction in &interaction_query {
         match *interaction {
             Interaction::Pressed => {

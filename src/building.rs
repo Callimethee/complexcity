@@ -10,7 +10,9 @@ use crate::{
 /// The minimum distance between two buildings.
 const MIN_DISTANCE: f32 = 30.0;
 
+// for z-ordering
 const BUILDING_LEVEL: f32 = 1.0;
+
 // Buildings sprite dimensions
 const HOUSE_SIZE: Vec2 = Vec2::new(48.0, 48.0);
 const FORUM_SIZE: Vec2 = Vec2::new(80.0, 96.0);
@@ -19,10 +21,10 @@ const HOSPITAL_SIZE: Vec2 = Vec2::new(48.0, 96.0);
 const POOL_SIZE: Vec2 = Vec2::new(64.0, 54.0);
 const RESTAURANT_SIZE: Vec2 = Vec2::new(64.0, 48.0);
 const CREATIVE_SIZE: Vec2 = Vec2::new(68.0, 42.0);
-const UNDERGROUND_SIZE: Vec2 = Vec2::new(32.0, 48.0);
 const TREE_SIZE: Vec2 = Vec2::new(32.0, 48.0);
 const LAMP_SIZE: Vec2 = Vec2::new(10.0, 46.0);
 
+/// If a building is available to be spawned.
 #[derive(Resource, Default, Debug)]
 struct BuildingAvailable {
     house: bool,
@@ -33,6 +35,8 @@ struct BuildingAvailable {
     restaurant: bool,
     creative: bool,
 }
+
+// Cooldowns for each non-decorative building
 
 #[derive(Resource, Debug)]
 struct HouseTimer(Timer);
@@ -67,7 +71,6 @@ pub enum BuildingType {
     Pool,
     Restaurant,
     Creative,
-    Underground,
     Tree,
     Lamp,
 }
@@ -88,7 +91,7 @@ impl Plugin for BuildingPlugin {
             .insert_resource(ForumTimer(Timer::from_seconds(55.0, TimerMode::Repeating)))
             .insert_resource(CinemaTimer(Timer::from_seconds(99.0, TimerMode::Repeating)))
             .insert_resource(HospitalTimer(Timer::from_seconds(
-                80.0,
+                70.0,
                 TimerMode::Repeating,
             )))
             .insert_resource(PoolTimer(Timer::from_seconds(109.0, TimerMode::Repeating)))
@@ -97,7 +100,7 @@ impl Plugin for BuildingPlugin {
                 TimerMode::Repeating,
             )))
             .insert_resource(CreativeTimer(Timer::from_seconds(
-                66.0,
+                86.0,
                 TimerMode::Repeating,
             )))
             .add_systems(OnEnter(GameState::Playing), spawn_info_text)
@@ -151,6 +154,8 @@ fn spawn_info_text(mut commands: Commands) {
     ));
 }
 
+/// If a building is available to be spawned, turn the
+/// corresponding text green, else leave it red
 fn update_info_text(
     mut text_query: Query<&mut Text, With<BuildingInfoText>>,
     available: Res<BuildingAvailable>,
@@ -205,6 +210,7 @@ fn update_info_text(
     }
 }
 
+/// Trigger the spawning of a building and reset its cooldown, if available
 fn trigger_spawn(
     mut commands: Commands,
     asset_handles: Res<AssetHandles>,
@@ -283,11 +289,9 @@ fn trigger_spawn(
     if keys.just_pressed(KeyCode::L) {
         spawn_building(BuildingType::Lamp, &mut commands, &asset_handles);
     }
-    // if keys.just_pressed(KeyCode::U) {
-    //     spawn_building(BuildingType::Underground, &mut commands, &asset_handles)
-    // }
 }
 
+/// Spawn a building of the given type
 fn spawn_building(
     b_type: BuildingType,
     commands: &mut Commands,
@@ -301,7 +305,6 @@ fn spawn_building(
         BuildingType::Pool => asset_handles.pool.clone(),
         BuildingType::Restaurant => asset_handles.restaurant.clone(),
         BuildingType::Creative => asset_handles.creative.clone(),
-        BuildingType::Underground => asset_handles.underground.clone(),
         BuildingType::Tree => asset_handles.tree.clone(),
         BuildingType::Lamp => asset_handles.lamp.clone(),
     };
@@ -327,6 +330,7 @@ fn spawn_building(
     });
 }
 
+/// Make a building's hitbox follow its translation
 fn hitbox_follow(mut draggables_query: Query<(&mut Draggable, &BuildingType, &Transform)>) {
     for (mut draggable, b_type, transform) in &mut draggables_query {
         let building_size = get_size_from_type(b_type);
@@ -346,12 +350,12 @@ fn get_size_from_type(b_type: &BuildingType) -> Vec2 {
         BuildingType::Pool => POOL_SIZE,
         BuildingType::Restaurant => RESTAURANT_SIZE,
         BuildingType::Creative => CREATIVE_SIZE,
-        BuildingType::Underground => UNDERGROUND_SIZE,
         BuildingType::Tree => TREE_SIZE,
         BuildingType::Lamp => LAMP_SIZE,
     }
 }
 
+/// Prevent two buildings from being on top of eachother
 fn destack_buildings(
     mut buildings_query: Query<(&BuildingType, &mut Transform)>,
     buttons: Res<Input<MouseButton>>,

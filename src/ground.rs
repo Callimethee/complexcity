@@ -25,6 +25,7 @@ impl Plugin for GroundPlugin {
     }
 }
 
+/// Spawns all floor tiles in a grid
 fn spawn_floor(mut commands: Commands, asset_handles: Res<AssetHandles>) {
     for x_pos in TILES_RANGE_X {
         for y_pos in TILES_RANGE_Y {
